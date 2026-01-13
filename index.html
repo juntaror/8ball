@@ -21,11 +21,67 @@ body {
     position: absolute;
     width: 6px;
     height: 6px;
-    background: rgba(255,255,255,0.5);
+    background: rgb(217, 255, 0);
     border-radius: 50%;
     animation: float 6s infinite linear;
 }
+.suggestion {
+    position: absolute;
+    bottom: -50px;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(6px);
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    white-space: nowrap;
+    cursor: pointer;
+    animation: floatSuggestion linear forwards;
+    pointer-events: auto;
+}
+.suggestion.pop {
+    animation: pop 0.4s ease forwards;
+}
 
+@keyframes pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.4); opacity: 1; }
+    100% { transform: scale(0); opacity: 0; }
+}
+
+.particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: #9fd3ff;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: particle 600ms ease-out forwards;
+}
+
+@keyframes particle {
+    from {
+        transform: translate(0,0) scale(1);
+        opacity: 1;
+    }
+    to {
+        transform: translate(var(--x), var(--y)) scale(0);
+        opacity: 0;
+    }
+}
+
+
+@keyframes floatSuggestion {
+    from {
+        transform: translateY(0);
+        opacity: 0;
+    }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    to {
+        transform: translateY(-120vh);
+        opacity: 0;
+    }
+}
 @keyframes float {
     from { transform: translateY(100vh); }
     to { transform: translateY(-10vh); }
@@ -34,6 +90,7 @@ body {
 .container {
     text-align: center;
     z-index: 2;
+    width: 320px;
 }
 
 input {
@@ -120,6 +177,35 @@ button:hover {
     opacity: 0.8;
 }
 
+.history {
+    margin-top: 15px;
+    background: rgba(255,255,255,0.08);
+    padding: 10px;
+    border-radius: 12px;
+    max-height: 140px;
+    overflow-y: auto;
+    font-size: 12px;
+    text-align: left;
+}
+
+.history h3 {
+    margin: 0 0 5px;
+    font-size: 13px;
+    text-align: center;
+    opacity: 0.9;
+}
+
+.history ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.history li {
+    margin-bottom: 6px;
+    opacity: 0.85;
+}
+
 .positive {
     background: #2ecc71 !important;
     box-shadow: 0 0 25px #2ecc71 !important;
@@ -161,6 +247,11 @@ for (let i = 0; i < 25; i++) {
 
     <button onclick="askQuestion()">Ask the 8 Ball</button>
     <div class="counter" id="counter">Questions asked: 0</div>
+
+    <div class="history">
+        <h3>🔮 History</h3>
+        <ul id="historyList"></ul>
+    </div>
 </div>
 
 <audio id="sound">
@@ -169,41 +260,31 @@ for (let i = 0; i < 25; i++) {
 
 <script>
 let count = 0;
+const historyList = document.getElementById("historyList");
 
 const answers = {
-    positive: [
-        "OO OFC!!",
-        "SIGURADO",
-        "MARAMING PUSIBLE PERO OO"
-    ],
-    negative: [
-        "HINDI PO ATE!!",
-        "DI YAN"
-    ],
-    maybe: [
-        "EWAN KO BAKA LANG",
-        "BAKA LANG ATA MAYBE SIGURO",
-        "KATAMAD MAYA KA NALANG MAG TANONG"
-    ]
+    positive: ["OO OFC!!", "SIGURADO", "MARAMING PUSIBLE PERO OO"],
+    negative: ["HINDI PO ATE!!", "DI YAN"],
+    maybe: ["EWAN KO BAKA LANG", "BAKA LANG ATA MAYBE SIGURO", "KATAMAD MAYA KA NALANG MAG TANONG"]
 };
 
 function askQuestion() {
-    const question = document.getElementById("question").value;
+    const input = document.getElementById("question");
+    const question = input.value.trim();
     const ball = document.getElementById("ball");
     const answerBox = document.getElementById("answer");
     const counter = document.getElementById("counter");
     const sound = document.getElementById("sound");
 
-    if (question.trim() === "") {
-        alert("HOY MAG TANONG KA MUNA ");
+    if (!question) {
+        alert("HOY MAG TANONG KA MUNA");
         return;
     }
 
     count++;
-    counter.textContent ="Questions asked: " + count;
+    counter.textContent = "Questions asked: " + count;
 
-    answerBox.className = "answer"; 
-    answerBox.classList.remove("show");
+    answerBox.className = "answer";
     answerBox.textContent = "";
 
     ball.classList.add("shake");
@@ -213,25 +294,34 @@ function askQuestion() {
     setTimeout(() => {
         const categories = ["positive", "negative", "maybe"];
         const category = categories[Math.floor(Math.random() * categories.length)];
-
         const text = answers[category][Math.floor(Math.random() * answers[category].length)];
 
-        answerBox.classList.add(category);
-
+        answerBox.classList.add(category, "show");
         typeText(answerBox, text);
-        answerBox.classList.add("show");
-        ball.classList.remove("shake");
 
-        document.getElementById("question").value = "";
+        addToHistory(question, text);
+
+        ball.classList.remove("shake");
+        input.value = "";
     }, 600);
 }
 
-function typeText(element, text) {
+function addToHistory(question, answer) {
+    const li = document.createElement("li");
+    li.innerHTML = `<strong>Q:</strong> ${question}<br><strong>A:</strong> ${answer}`;
+
+    historyList.prepend(li);
+
+    if (historyList.children.length > 5) {
+        historyList.removeChild(historyList.lastChild);
+    }
+}
+
+function typeText(el, text) {
     let i = 0;
-    element.textContent = "";
+    el.textContent = "";
     const interval = setInterval(() => {
-        element.textContent += text[i];
-        i++;
+        el.textContent += text[i++];
         if (i >= text.length) clearInterval(interval);
     }, 40);
 }
@@ -239,6 +329,59 @@ function typeText(element, text) {
 document.getElementById("question").addEventListener("keydown", e => {
     if (e.key === "Enter") askQuestion();
 });
+const suggestions = [
+    "Crush ba niya ako?",
+    "Papasa ba ako?",
+    "Magiging mayaman ba ako?",
+    "Tama ba desisyon ko?",
+    "May pag-asa pa ba?",
+    "Should I text them?",
+    "Makakapasa ba ako sa exam?",
+    "Magiging okay ba lahat?",
+    "May mangyayaring maganda today?"
+];
+
+function spawnSuggestion() {
+    const bubble = document.createElement("div");
+    bubble.className = "suggestion";
+    bubble.textContent = suggestions[Math.floor(Math.random() * suggestions.length)];
+
+    bubble.style.left = Math.random() * 70 + 10 + "vw";
+    bubble.style.animationDuration = (12 + Math.random() * 6) + "s";
+
+    bubble.onclick = (e) => {
+        document.getElementById("question").value = bubble.textContent;
+
+        bubble.classList.add("pop");
+
+        createParticles(e.clientX, e.clientY);
+
+        setTimeout(() => bubble.remove(), 400);
+    };
+
+    document.body.appendChild(bubble);
+
+    setTimeout(() => bubble.remove(), 20000);
+}
+function createParticles(x, y) {
+    for (let i = 0; i < 8; i++) {
+        const p = document.createElement("div");
+        p.className = "particle";
+
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 30 + Math.random() * 30;
+
+        p.style.left = x + "px";
+        p.style.top = y + "px";
+        p.style.setProperty("--x", Math.cos(angle) * distance + "px");
+        p.style.setProperty("--y", Math.sin(angle) * distance + "px");
+
+        document.body.appendChild(p);
+        setTimeout(() => p.remove(), 600);
+    }
+}
+
+setInterval(spawnSuggestion, 3500);
 </script>
 
 </body>
