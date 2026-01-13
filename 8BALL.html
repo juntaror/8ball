@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Magic 8 Ball</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: radial-gradient(circle,#1a1a1a,#000);
+    height: 100vh;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    overflow: hidden;
+}
+
+.sparkle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: rgba(255,255,255,0.5);
+    border-radius: 50%;
+    animation: float 6s infinite linear;
+}
+
+@keyframes float {
+    from { transform: translateY(100vh); }
+    to { transform: translateY(-10vh); }
+}
+
+.container {
+    text-align: center;
+    z-index: 2;
+}
+
+input {
+    padding: 10px;
+    width: 260px;
+    border-radius: 20px;
+    border: none;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.ball {
+    width: 220px;
+    height: 220px;
+    background: black;
+    border-radius: 50%;
+    margin: 20px auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: inset -15px -15px 40px rgba(255,255,255,0.15), inset 15px 15px 40px rgba(0,0,0,0.9);
+}
+
+.answer {
+    width: 120px;
+    height: 120px;
+    background: #0b3d91;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 14px;
+    padding: 10px;
+    text-align: center;
+    opacity: 0;
+    box-shadow: 0 0 20px #4aa3ff;
+}
+
+.shake {
+    animation: shake 0.6s, bounce 0.6s;
+}
+
+@keyframes shake {
+    0% { transform: rotate(0); }
+    25% { transform: rotate(15deg); }
+    50% { transform: rotate(-15deg); }
+    75% { transform: rotate(10deg); }
+    100% { transform: rotate(0); }
+}
+
+@keyframes bounce {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+    100% { transform: translateY(0); }
+}
+
+.show {
+    opacity: 1;
+    animation: glow 1.5s infinite alternate;
+}
+
+@keyframes glow {
+    from { box-shadow: 0 0 10px #4aa3ff; }
+    to { box-shadow: 0 0 25px #9fd3ff; }
+}
+
+button {
+    padding: 10px 30px;
+    border: none;
+    border-radius: 25px;
+    background: #8e44ad;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #732d91;
+}
+
+.counter { 
+    margin-top: 10px;
+    font-size: 13px;
+    opacity: 0.8;
+}
+
+.positive {
+    background: #2ecc71 !important;
+    box-shadow: 0 0 25px #2ecc71 !important;
+}
+
+.negative {
+    background: #e74c3c !important;
+    box-shadow: 0 0 25px #e74c3c !important;
+}
+
+.maybe {
+    background: #f1c40f !important;
+    box-shadow: 0 0 25px #f1c40f !important;
+    color: black;
+}
+</style>
+</head>
+
+<body>
+
+<script>
+for (let i = 0; i < 25; i++) {
+    const s = document.createElement("div");
+    s.className = "sparkle";
+    s.style.left = Math.random() * 100 + "vw";
+    s.style.animationDuration = (4 + Math.random() * 4) + "s";
+    document.body.appendChild(s);
+}
+</script>
+
+<div class="container">
+    <h1>🎱 Magic 8 Ball</h1>
+
+    <input type="text" id="question" placeholder="Ask your destiny...">
+
+    <div class="ball" id="ball">
+        <div class="answer" id="answer"></div>
+    </div>
+
+    <button onclick="askQuestion()">Ask the 8 Ball</button>
+    <div class="counter" id="counter">Questions asked: 0</div>
+</div>
+
+<audio id="sound">
+    <source src="https://www.soundjay.com/misc/sounds/magic-chime-02.mp3">
+</audio>
+
+<script>
+let count = 0;
+
+const answers = {
+    positive: [
+        "OO OFC!!",
+        "SIGURADO",
+        "MARAMING PUSIBLE PERO OO"
+    ],
+    negative: [
+        "HINDI PO ATE!!",
+        "DI YAN"
+    ],
+    maybe: [
+        "EWAN KO BAKA LANG",
+        "BAKA LANG ATA MAYBE SIGURO",
+        "KATAMAD MAYA KA NALANG MAG TANONG"
+    ]
+};
+
+function askQuestion() {
+    const question = document.getElementById("question").value;
+    const ball = document.getElementById("ball");
+    const answerBox = document.getElementById("answer");
+    const counter = document.getElementById("counter");
+    const sound = document.getElementById("sound");
+
+    if (question.trim() === "") {
+        alert("HOY MAG TANONG KA MUNA ");
+        return;
+    }
+
+    count++;
+    counter.textContent ="Questions asked: " + count;
+
+    answerBox.className = "answer"; 
+    answerBox.classList.remove("show");
+    answerBox.textContent = "";
+
+    ball.classList.add("shake");
+    sound.currentTime = 0;
+    sound.play();
+
+    setTimeout(() => {
+        const categories = ["positive", "negative", "maybe"];
+        const category = categories[Math.floor(Math.random() * categories.length)];
+
+        const text = answers[category][Math.floor(Math.random() * answers[category].length)];
+
+        answerBox.classList.add(category);
+
+        typeText(answerBox, text);
+        answerBox.classList.add("show");
+        ball.classList.remove("shake");
+
+        document.getElementById("question").value = "";
+    }, 600);
+}
+
+function typeText(element, text) {
+    let i = 0;
+    element.textContent = "";
+    const interval = setInterval(() => {
+        element.textContent += text[i];
+        i++;
+        if (i >= text.length) clearInterval(interval);
+    }, 40);
+}
+
+document.getElementById("question").addEventListener("keydown", e => {
+    if (e.key === "Enter") askQuestion();
+});
+</script>
+
+</body>
+</html>
